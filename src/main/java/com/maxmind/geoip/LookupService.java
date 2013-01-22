@@ -23,8 +23,8 @@ package com.maxmind.geoip;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.InetAddress;
 import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -36,36 +36,8 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
 /**
- * Provides a lookup service for information based on an IP address. The location of
- * a database file is supplied when creating a lookup service instance. The edition of
- * the database determines what information is available about an IP address. See the
- * DatabaseInfo class for further details.<p>
- *
- * The following code snippet demonstrates looking up the country that an IP
- * address is from:
- * <pre>
- * // First, create a LookupService instance with the location of the database.
- * LookupService lookupService = new LookupService("c:\\geoip.dat");
- * // Assume we have a String ipAddress (in dot-decimal form).
- * Country country = lookupService.getCountry(ipAddress);
- * System.out.println("The country is: " + country.getName());
- * System.out.println("The country code is: " + country.getCode());
- * </pre>
- *
- * In general, a single LookupService instance should be created and then reused
- * repeatedly.<p>
- *
- * <i>Tip:</i> Those deploying the GeoIP API as part of a web application may find it
- * difficult to pass in a File to create the lookup service, as the location of the
- * database may vary per deployment or may even be part of the web-application. In this
- * case, the database should be added to the classpath of the web-app. For example, by
- * putting it into the WEB-INF/classes directory of the web application. The following code
- * snippet demonstrates how to create a LookupService using a database that can be found
- * on the classpath:
- *
- * <pre>
- * String fileName = getClass().getResource("/GeoIP.dat").toExternalForm().substring(6);
- * LookupService lookupService = new LookupService(fileName);</pre>
+ * Modified version of Maxmind's LookupService (original renamed to ReferenceLookupService) that uses the RandomAccessData interface rather than explicitly
+ * requiring a File.
  *
  * @author Matt Tucker (matt@jivesoftware.com)
  */
@@ -89,7 +61,7 @@ public class LookupService {
 
     int databaseSegments[];
     int recordLength;
-    
+
     String licenseKey;
     int dnsService = 0;
     int dboptions;
@@ -189,9 +161,10 @@ public class LookupService {
     /* init the hashmap once at startup time */
     static {
         int i;
-        if(countryCode.length!=countryName.length)
-            throw new AssertionError("countryCode.length!=countryName.length");
-              
+        if(countryCode.length!=countryName.length) {
+			throw new AssertionError("countryCode.length!=countryName.length");
+		}
+
         // distributed service only
         for (i = 0; i < countryCode.length ;i++){
             hashmapcountryCodetoindex.put(countryCode[i],Integer.valueOf(i));
@@ -354,7 +327,7 @@ public class LookupService {
 			}
 			file.readFully(buf);
 			for (j = 0; j < SEGMENT_RECORD_LENGTH; j++) {
-			    databaseSegments[0] += (unsignedByteToInt(buf[j]) << (j * 8));
+			    databaseSegments[0] += unsignedByteToInt(buf[j]) << j * 8;
 			}
 		    }
                 break;
@@ -363,10 +336,10 @@ public class LookupService {
                 file.seek(file.getFilePointer() - 4);
             }
         }
-        if ((databaseType == DatabaseInfo.COUNTRY_EDITION) ||
-            (databaseType == DatabaseInfo.COUNTRY_EDITION_V6) ||
-	    (databaseType == DatabaseInfo.PROXY_EDITION) ||
-	    (databaseType == DatabaseInfo.NETSPEED_EDITION)) {
+        if (databaseType == DatabaseInfo.COUNTRY_EDITION ||
+            databaseType == DatabaseInfo.COUNTRY_EDITION_V6 ||
+	    databaseType == DatabaseInfo.PROXY_EDITION ||
+	    databaseType == DatabaseInfo.NETSPEED_EDITION) {
             databaseSegments = new int[1];
             databaseSegments[0] = COUNTRY_BEGIN;
             recordLength = STANDARD_RECORD_LENGTH;
@@ -384,8 +357,8 @@ public class LookupService {
           index_cache = new byte[l];
           if (index_cache != null){
             file.seek(0);
-            file.readFully(index_cache,0,l);     
-          }          
+            file.readFully(index_cache,0,l);
+          }
         } else {
           index_cache = null;
         }
@@ -510,7 +483,7 @@ public class LookupService {
     }
 
     public int last_netmask() {
-      return this.last_netmask; 
+      return this.last_netmask;
     }
 
     public void netmask(int nm){
@@ -653,7 +626,7 @@ public class LookupService {
         Location record = new Location();
         String key;
         String value;
-        StringTokenizer st = new StringTokenizer(str,";=\""); 
+        StringTokenizer st = new StringTokenizer(str,";=\"");
         while (st.hasMoreTokens()) {
 	    key = st.nextToken();
             if (st.hasMoreTokens()) {
@@ -735,8 +708,8 @@ public class LookupService {
             if (seek_region >= 1000) {
                 record.countryCode = "US";
                 record.countryName = "United States";
-                ch[0] = (char)(((seek_region - 1000)/26) + 65);
-                ch[1] = (char)(((seek_region - 1000)%26) + 65);
+                ch[0] = (char)((seek_region - 1000)/26 + 65);
+                ch[1] = (char)((seek_region - 1000)%26 + 65);
 	        record.region = new String(ch);
             } else {
                 record.countryCode = countryCode[seek_region];
@@ -753,14 +726,14 @@ public class LookupService {
             } else if (seek_region < CANADA_OFFSET) {
                 record.countryCode = "US";
                 record.countryName = "United States";
-                ch[0] = (char)(((seek_region - US_OFFSET)/26) + 65);
-                ch[1] = (char)(((seek_region - US_OFFSET)%26) + 65);
+                ch[0] = (char)((seek_region - US_OFFSET)/26 + 65);
+                ch[1] = (char)((seek_region - US_OFFSET)%26 + 65);
 	        record.region = new String(ch);
             } else if (seek_region < WORLD_OFFSET) {
                 record.countryCode = "CA";
                 record.countryName = "Canada";
-                ch[0] = (char)(((seek_region - CANADA_OFFSET)/26) + 65);
-                ch[1] = (char)(((seek_region - CANADA_OFFSET)%26) + 65);
+                ch[0] = (char)((seek_region - CANADA_OFFSET)/26 + 65);
+                ch[1] = (char)((seek_region - CANADA_OFFSET)%26 + 65);
 	        record.region = new String(ch);
             } else {
                 record.countryCode = countryCode[(seek_region - WORLD_OFFSET) / FIPS_RANGE];
@@ -802,8 +775,9 @@ public class LookupService {
             record_buf_offset++;
 
             // get region
-            while (record_buf[record_buf_offset + str_length] != '\0')
-                str_length++;
+            while (record_buf[record_buf_offset + str_length] != '\0') {
+				str_length++;
+			}
             if (str_length > 0) {
                 record.region = new String(record_buf, record_buf_offset, str_length);
             }
@@ -811,8 +785,9 @@ public class LookupService {
             str_length = 0;
 
             // get city
-            while (record_buf[record_buf_offset + str_length] != '\0')
-                str_length++;
+            while (record_buf[record_buf_offset + str_length] != '\0') {
+				str_length++;
+			}
             if (str_length > 0) {
                 record.city = new String(record_buf, record_buf_offset, str_length, "ISO-8859-1");
             }
@@ -820,22 +795,25 @@ public class LookupService {
             str_length = 0;
 
             // get postal code
-            while (record_buf[record_buf_offset + str_length] != '\0')
-                str_length++;
+            while (record_buf[record_buf_offset + str_length] != '\0') {
+				str_length++;
+			}
             if (str_length > 0) {
                 record.postalCode = new String(record_buf, record_buf_offset, str_length);
             }
             record_buf_offset += str_length + 1;
 
             // get latitude
-            for (j = 0; j < 3; j++)
-                latitude += (unsignedByteToInt(record_buf[record_buf_offset + j]) << (j * 8));
+            for (j = 0; j < 3; j++) {
+				latitude += unsignedByteToInt(record_buf[record_buf_offset + j]) << j * 8;
+			}
             record.latitude = (float) latitude/10000 - 180;
             record_buf_offset += 3;
 
             // get longitude
-            for (j = 0; j < 3; j++)
-                longitude += (unsignedByteToInt(record_buf[record_buf_offset + j]) << (j * 8));
+            for (j = 0; j < 3; j++) {
+				longitude += unsignedByteToInt(record_buf[record_buf_offset + j]) << j * 8;
+			}
 	    record.longitude = (float) longitude/10000 - 180;
 
 	    record.dma_code = record.metro_code = 0;
@@ -845,8 +823,9 @@ public class LookupService {
 		int metroarea_combo = 0;
 		if (record.countryCode == "US") {
 		    record_buf_offset += 3;
-		    for (j = 0; j < 3; j++)
-			metroarea_combo += (unsignedByteToInt(record_buf[record_buf_offset + j]) << (j * 8));
+		    for (j = 0; j < 3; j++) {
+				metroarea_combo += unsignedByteToInt(record_buf[record_buf_offset + j]) << j * 8;
+			}
 		    record.metro_code = record.dma_code = metroarea_combo/1000;
 		    record.area_code = metroarea_combo % 1000;
 		}
@@ -889,8 +868,9 @@ public class LookupService {
             record_buf_offset++;
 
             // get region
-            while (record_buf[record_buf_offset + str_length] != '\0')
-                str_length++;
+            while (record_buf[record_buf_offset + str_length] != '\0') {
+				str_length++;
+			}
             if (str_length > 0) {
                 record.region = new String(record_buf, record_buf_offset, str_length);
             }
@@ -898,8 +878,9 @@ public class LookupService {
             str_length = 0;
 
             // get city
-            while (record_buf[record_buf_offset + str_length] != '\0')
-                str_length++;
+            while (record_buf[record_buf_offset + str_length] != '\0') {
+				str_length++;
+			}
             if (str_length > 0) {
                 record.city = new String(record_buf, record_buf_offset, str_length, "ISO-8859-1");
             }
@@ -907,22 +888,25 @@ public class LookupService {
             str_length = 0;
 
             // get postal code
-            while (record_buf[record_buf_offset + str_length] != '\0')
-                str_length++;
+            while (record_buf[record_buf_offset + str_length] != '\0') {
+				str_length++;
+			}
             if (str_length > 0) {
                 record.postalCode = new String(record_buf, record_buf_offset, str_length);
             }
             record_buf_offset += str_length + 1;
 
             // get latitude
-            for (j = 0; j < 3; j++)
-                latitude += (unsignedByteToInt(record_buf[record_buf_offset + j]) << (j * 8));
+            for (j = 0; j < 3; j++) {
+				latitude += unsignedByteToInt(record_buf[record_buf_offset + j]) << j * 8;
+			}
             record.latitude = (float) latitude/10000 - 180;
             record_buf_offset += 3;
 
             // get longitude
-            for (j = 0; j < 3; j++)
-                longitude += (unsignedByteToInt(record_buf[record_buf_offset + j]) << (j * 8));
+            for (j = 0; j < 3; j++) {
+				longitude += unsignedByteToInt(record_buf[record_buf_offset + j]) << j * 8;
+			}
 	    record.longitude = (float) longitude/10000 - 180;
 
 	    record.dma_code = record.metro_code = 0;
@@ -932,8 +916,9 @@ public class LookupService {
 		int metroarea_combo = 0;
 		if (record.countryCode == "US") {
 		    record_buf_offset += 3;
-		    for (j = 0; j < 3; j++)
-			metroarea_combo += (unsignedByteToInt(record_buf[record_buf_offset + j]) << (j * 8));
+		    for (j = 0; j < 3; j++) {
+				metroarea_combo += unsignedByteToInt(record_buf[record_buf_offset + j]) << j * 8;
+			}
 		    record.metro_code = record.dma_code = metroarea_combo/1000;
 		    record.area_code = metroarea_combo % 1000;
 		}
@@ -1046,7 +1031,7 @@ public class LookupService {
         }
     }
 
- 
+
 
 
     /**
@@ -1065,15 +1050,15 @@ public class LookupService {
             if ((dboptions & GEOIP_MEMORY_CACHE) == 1) {
 		//read from memory
                 for (int i = 0;i < 2 * MAX_RECORD_LENGTH;i++) {
-		    buf[i] = dbbuffer[(2 * recordLength * offset)+i];
+		    buf[i] = dbbuffer[2 * recordLength * offset+i];
 		}
             } else if ((dboptions & GEOIP_INDEX_CACHE) != 0) {
                 //read from index cache
                 for (int i = 0;i < 2 * MAX_RECORD_LENGTH;i++) {
-		    buf[i] = index_cache[(2 * recordLength * offset)+i];
-		}            
+		    buf[i] = index_cache[2 * recordLength * offset+i];
+		}
             } else {
-		//read from disk 
+		//read from disk
 		try {
                     file.seek(2 * recordLength * offset);
                     file.readFully(buf);
@@ -1089,7 +1074,7 @@ public class LookupService {
                     if (y < 0) {
                         y+= 256;
                     }
-                    x[i] += (y << (j * 8));
+                    x[i] += y << j * 8;
                 }
             }
 
@@ -1131,15 +1116,15 @@ public class LookupService {
             if ((dboptions & GEOIP_MEMORY_CACHE) == 1) {
 		//read from memory
                 for (int i = 0;i < 2 * MAX_RECORD_LENGTH;i++) {
-		    buf[i] = dbbuffer[(2 * recordLength * offset)+i];
+		    buf[i] = dbbuffer[2 * recordLength * offset+i];
 		}
             } else if ((dboptions & GEOIP_INDEX_CACHE) != 0) {
                 //read from index cache
                 for (int i = 0;i < 2 * MAX_RECORD_LENGTH;i++) {
-		    buf[i] = index_cache[(2 * recordLength * offset)+i];
-		}            
+		    buf[i] = index_cache[2 * recordLength * offset+i];
+		}
             } else {
-		//read from disk 
+		//read from disk
 		try {
                     file.seek(2 * recordLength * offset);
                     file.readFully(buf);
@@ -1155,11 +1140,11 @@ public class LookupService {
                     if (y < 0) {
                         y+= 256;
                     }
-                    x[i] += (y << (j * 8));
+                    x[i] += y << j * 8;
                 }
             }
 
-            if ((ipAddress & (1 << depth)) > 0) {
+            if ((ipAddress & 1 << depth) > 0) {
                 if (x[1] >= databaseSegments[0]) {
                     last_netmask = 32 - depth;
                     return x[1];
@@ -1193,12 +1178,12 @@ public class LookupService {
             if (y < 0) {
                 y+= 256;
             }
-            ipnum += y << ((3-i)*8);
+            ipnum += y << (3-i)*8;
         }
         return ipnum;
     }
 
     private static int unsignedByteToInt(byte b) {
-        return (int) b & 0xFF;
+        return b & 0xFF;
     }
 }

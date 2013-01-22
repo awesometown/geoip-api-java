@@ -4,4 +4,12 @@
   <artifactId>geo-api-java-appengine</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>Maxmind GeoIP API for AppEngine</name>
+  <dependencies>
+  	<dependency>
+  		<groupId>org.testng</groupId>
+  		<artifactId>testng</artifactId>
+  		<version>6.1.1</version>
+  		<scope>test</scope>
+  	</dependency>
+  </dependencies>
 </project>
