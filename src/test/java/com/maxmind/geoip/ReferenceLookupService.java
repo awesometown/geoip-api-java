@@ -40,6 +40,7 @@ import javax.naming.directory.InitialDirContext;
  *
  * @author Matt Tucker (matt@jivesoftware.com)
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class ReferenceLookupService {
 
 	/**
@@ -620,6 +621,7 @@ public class ReferenceLookupService {
 			// TODO if DNS is not available, go to local file as backup
 		}
 	}
+
 
 	String getDnsAttributes(String ip) {
 		try {
