@@ -95,8 +95,8 @@ public class LookupService {
 
 	private final Country UNKNOWN_COUNTRY = new Country("--", "N/A");
 
-	private static final HashMap hashmapcountryCodetoindex = new HashMap(512);
-	private static final HashMap hashmapcountryNametoindex = new HashMap(512);
+	private static final HashMap<String, Integer> hashmapcountryCodetoindex = new HashMap<String, Integer>(512);
+	private static final HashMap<String, Integer> hashmapcountryNametoindex = new HashMap<String, Integer>(512);
 	private static final String[] countryCode = {
 			"--", "AP", "EU", "AD", "AE", "AF", "AG", "AI", "AL", "AM", "CW",
 			"AO", "AQ", "AR", "AS", "AT", "AU", "AW", "AZ", "BA", "BB",
@@ -629,7 +629,7 @@ public class LookupService {
 
 	String getDnsAttributes(String ip) {
 		try {
-			Hashtable env = new Hashtable();
+			Hashtable<String, String> env = new Hashtable<String, String>();
 			env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
 			// TODO don't specify ws1, instead use ns servers for s.maxmind.com
 			env.put("java.naming.provider.url", "dns://ws1.maxmind.com/");
@@ -660,7 +660,7 @@ public class LookupService {
 				value = "";
 			}
 			if (key.equals("co")) {
-				Integer i = (Integer) hashmapcountryCodetoindex.get(value);
+				Integer i = hashmapcountryCodetoindex.get(value);
 				record.countryCode = value;
 				record.countryName = countryName[i.intValue()];
 			}
