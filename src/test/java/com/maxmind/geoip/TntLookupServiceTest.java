@@ -3,6 +3,8 @@ package com.maxmind.geoip;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Date;
@@ -14,8 +16,9 @@ public class TntLookupServiceTest {
 
 	@Test
 	public void testTntResultsConsistentWithMaxmind() throws IOException {
-		ReferenceLookupService ls = new ReferenceLookupService("src/test/resources/GeoLiteCity.dat");
-		LookupService tntls = new LookupService("src/test/resources/GeoLiteCity.dat");
+		String dataFile = "src/test/resources/GeoLiteCity.dat";
+		ReferenceLookupService ls = new ReferenceLookupService(dataFile);
+		LookupService tntls = new LookupService(getRandomAccessData(dataFile));
 
 		Random r = new Random(new Date().getTime());
 		byte[] addrBytes = new byte[4];
@@ -41,5 +44,16 @@ public class TntLookupServiceTest {
 				assertEquals(actual.metro_code, expected.metro_code);
 			}
 		}
+	}
+
+	private RandomAccessData getRandomAccessData(String sourceFile) throws IOException {
+		File f = new File(sourceFile);
+		byte[] bytes = new byte[(int) f.length()];
+
+		FileInputStream in = new FileInputStream(f);
+		in.read(bytes);
+		in.close();
+
+		return new ByteArrayRandomAccessData(bytes);
 	}
 }
